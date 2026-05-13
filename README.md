@@ -1,32 +1,37 @@
 # ProjectNet
 
-Spring Boot backend with JWT authentication and Discord account linking via one-time verification codes.
+A Spring Boot backend service providing JWT-based authentication and Discord account linking via one-time verification codes.
 
 ---
 
 ## Features
 
-- User registration with email, password, and nickname
-- Login with email and password
+- User registration (email, password, nickname)
+- User authentication via email and password
 - JWT access token (15 minutes lifetime)
 - JWT refresh token (30 days lifetime)
-- Access token renewal via refresh token
+- Access token renewal using refresh token
 - Discord account linking via one-time verification code
 
 ---
 
 ## Authentication
 
-The system uses JWT-based authentication:
+The system is based on JWT (JSON Web Tokens):
 
-- **Access Token** — valid for 15 minutes
-- **Refresh Token** — valid for 30 days
+### Access Token
+- Lifetime: 15 minutes
+- Used for accessing protected endpoints
 
-After the access token expires, a new one can be obtained using:
+### Refresh Token
+- Lifetime: 30 days
+- Used to obtain a new access token
+
+### Refresh Endpoint
 
 ```http
 POST /auth/refresh
-```
+````
 
 ---
 
@@ -34,9 +39,11 @@ POST /auth/refresh
 
 ### Register User
 
-`POST /auth/register`
+```http
+POST /auth/register
+```
 
-Registers a new user.
+Creates a new user account.
 
 #### Request Body
 
@@ -50,51 +57,62 @@ Registers a new user.
 
 ---
 
-## Discord Account Linking (Extended)
+## Discord Account Linking
 
-This module is responsible for binding a Discord account to an existing application user account using a one-time verification code.
+This module allows linking a Discord account to an existing application user using a one-time verification code.
 
-The system is designed to prevent unauthorized linking and ensure that only the owner of both accounts can perform the binding.
+The mechanism ensures that only the legitimate owner of both accounts can complete the linking process.
 
 ---
 
-## Entities Involved
+## Entities
 
 ### Application User
 
-A registered user in the backend system:
+A user of the system:
 
-* authenticated via email + password
-* identified internally by `userId`
-
-### Discord User
-
-A user identified by:
-
-* Discord `userId`
-* optionally username + discriminator (legacy)
-
-### Linking Code
-
-A temporary, single-use code used as proof of ownership.
-
-Fields:
-
-* `code` (string / numeric)
-* `userId` (application user)
-* `expiresAt` (timestamp)
-* `used` (boolean)
+* Created via registration
+* Identified by `userId`
+* Authenticated via email and password
 
 ---
 
-## Linking Flow (Step-by-Step)
+### Discord User
 
-### 1. Request linking code (backend → user)
+Represents a Discord account:
 
-The user initiates linking from the application:
+* `discordUserId` (primary identifier)
+* Username (optional)
+* Discriminator (legacy support)
+
+---
+
+### Linking Code
+
+A temporary one-time code used for verification.
+
+Fields:
+
+* `code` — string or numeric value
+* `userId` — owner in the application
+* `expiresAt` — expiration timestamp
+* `used` — boolean flag
+
+---
+
+## Discord Linking Flow
+
+### Step 1: Request linking code
+
+The authenticated user requests a linking code:
 
 ```http
-GET /auth/linking?DISCORD=true
+GET /auth/linking?discord=true
 Authorization: Bearer <access_token>
 ```
 
+The response contains a one-time code used to verify ownership of the account.
+
+
+- или :contentReference[oaicite:2]{index=2}
+```
