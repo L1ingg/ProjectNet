@@ -98,5 +98,3 @@ GET /auth/linking?DISCORD=true
 Authorization: Bearer <access_token>
 ```
 
-```
-```
