@@ -1,43 +1,41 @@
+
 # ProjectNet
 
-A Spring Boot backend service providing JWT-based authentication and Discord account linking via one-time verification codes.
+Backend service written in Spring Boot providing JWT-based authentication and Discord account linking via one-time verification codes and a Discord bot.
 
 ---
 
 ## Features
 
 - User registration (email, password, nickname)
-- User authentication via email and password
-- JWT access token (15 minutes lifetime)
-- JWT refresh token (30 days lifetime)
-- Access token renewal using refresh token
-- Discord account linking via one-time verification code
+- User login via email and password
+- JWT authentication
+  - Access token: 15 minutes lifetime
+  - Refresh token: 30 days lifetime
+- Token refresh endpoint
+- Discord account linking via one-time code + Discord bot command
 
 ---
 
-## Authentication
+## Authentication System
 
-The system is based on JWT (JSON Web Tokens):
+Authentication is based on JWT tokens.
 
-### Access Token
-- Lifetime: 15 minutes
-- Used for accessing protected endpoints
+### Tokens
 
-### Refresh Token
-- Lifetime: 30 days
-- Used to obtain a new access token
+- **Access Token**
+  - Valid for 15 minutes
+  - Used for accessing protected endpoints
 
-### Refresh Endpoint
-
-```http
-POST /auth/refresh
-````
+- **Refresh Token**
+  - Valid for 30 days
+  - Used to generate new access tokens
 
 ---
 
-## API
+## API Endpoints
 
-### Register User
+### Register
 
 ```http
 POST /auth/register
@@ -45,74 +43,120 @@ POST /auth/register
 
 Creates a new user account.
 
-#### Request Body
+#### Body
 
 ```json
 {
   "email": "user@example.com",
   "password": "password123",
-  "nickname": "nickname"
+  "username": "username"
 }
 ```
 
 ---
 
-## Discord Account Linking
-
-This module allows linking a Discord account to an existing application user using a one-time verification code.
-
-The mechanism ensures that only the legitimate owner of both accounts can complete the linking process.
-
----
-
-## Entities
-
-### Application User
-
-A user of the system:
-
-* Created via registration
-* Identified by `userId`
-* Authenticated via email and password
-
----
-
-### Discord User
-
-Represents a Discord account:
-
-* `discordUserId` (primary identifier)
-* Username (optional)
-* Discriminator (legacy support)
-
----
-
-### Linking Code
-
-A temporary one-time code used for verification.
-
-Fields:
-
-* `code` — string or numeric value
-* `userId` — owner in the application
-* `expiresAt` — expiration timestamp
-* `used` — boolean flag
-
----
-
-## Discord Linking Flow
-
-### Step 1: Request linking code
-
-The authenticated user requests a linking code:
+### Login
 
 ```http
-GET /auth/linking?discord=true
+POST /auth/login
+```
+
+Authenticates user and returns JWT tokens.
+
+#### Body
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+---
+
+### Refresh Token
+
+```http
+POST /auth/refresh
+```
+
+Generates a new access token using a valid refresh token.
+
+---
+
+## Discord Integration
+
+The project includes a Discord bot that allows linking a Discord account to an application user.
+
+### Overview
+
+Linking is performed using a one-time verification code:
+
+1. User requests a linking code from backend
+2. Backend generates a temporary one-time code
+3. User sends this code to a Discord bot using `/link`
+4. Bot validates the code
+5. Accounts are linked
+
+---
+
+## Request Linking Code
+
+```http
+GET /auth/linking?DISCORD=true
 Authorization: Bearer <access_token>
 ```
 
-The response contains a one-time code used to verify ownership of the account.
+### Response
 
+Returns a one-time verification code tied to the authenticated user.
 
-- или :contentReference[oaicite:2]{index=2}
+---
+
+## Discord Bot Command
+
 ```
+/link code:<verification_code>
+```
+
+Example:
+
+```
+/link code:123456
+```
+
+---
+
+## Linking Logic
+
+### Linking Code
+
+* Single-use
+* Bound to a specific userId
+* Has expiration time
+* Invalid after successful use
+
+### Flow
+
+1. Backend generates linking code for authenticated user
+2. User receives code
+3. User sends code to Discord bot
+4. Bot validates:
+
+   * code exists
+   * code not expired
+   * code not used
+5. If valid → Discord account is linked to application user
+6. Code is marked as used
+
+---
+
+## Result
+
+After successful linking:
+
+* Application user is associated with a Discord user ID
+* Linking code becomes invalid
+* Discord bot confirms successful binding
+
+
