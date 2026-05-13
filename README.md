@@ -33,5 +33,5 @@ Registers a new user.
 {
   "email": "user@example.com",
   "password": "password123",
-  "nickname": "nickname"
+  "username": "nickname"
 }
